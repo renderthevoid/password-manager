@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 interface IModalProps {
-    title: string
+  title: string
 }
 const props = defineProps<IModalProps>()
 import { faXmark } from '@fortawesome/free-solid-svg-icons'

@@ -8,12 +8,33 @@
         <div class="flex-1">
           <v-input v-model="store.value" placeholder="Введите сервис" class="w-3/5"></v-input>
         </div>
-        <div>
-          <button class="group px-2 py-1 border rounded-lg transition-all" @click="modalStore.modalEnable">
-            <span>
-              <font-awesome-icon :icon="faPlus" class="text-gray-500 group-hover:text-gray-300 transition-all"/>
-            </span>
-          </button>
+        <div class="flex items-center gap-2">
+          <div>
+            <button
+              class="group px-2 py-1 border rounded-lg transition-all"
+              @click="modalStore.generateModalEnable"
+            >
+              <span>
+                <font-awesome-icon
+                  :icon="faKey"
+                  class="text-gray-500 group-hover:text-gray-300 transition-all"
+                />
+              </span>
+            </button>
+          </div>
+          <div>
+            <button
+              class="group px-2 py-1 border rounded-lg transition-all"
+              @click="modalStore.modalEnable"
+            >
+              <span>
+                <font-awesome-icon
+                  :icon="faPlus"
+                  class="text-gray-500 group-hover:text-gray-300 transition-all"
+                />
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -21,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faKey } from '@fortawesome/free-solid-svg-icons'
 import VInput from './VInput.vue'
 import { useSearchValueStore } from '@/stores/searchValueStore'
 import { ref } from 'vue'

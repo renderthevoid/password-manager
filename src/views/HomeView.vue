@@ -3,13 +3,17 @@ import VHeader from '@/components/VHeader.vue'
 import VList from '@/components/VList.vue'
 import VModal from '@/components/VModal.vue'
 import VInput from '@/components/VInput.vue'
-import { computed, ref } from 'vue'
+import VCheckbox from '@/components/VCheckbox.vue'
+import VRadio from '@/components/VRadio.vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import type { IPasswordItem } from '@/models/interfaces/PasswordInterface'
 import { useClipboard } from '@vueuse/core'
 import { useSearchValueStore } from '@/stores/searchValueStore'
 import { useModalStore } from '@/stores/modalStore'
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 import { getRandomStatus } from '@/utils/randomStatus'
+import { generateRandomPassword } from '@/utils/generateRandomPassword'
+import type { IGenerateSettings } from '@/models/interfaces/GenerateInterface'
 
 const serviceValue = ref<string>('')
 const passwordValue = ref<string>('')
@@ -21,6 +25,14 @@ const items = ref<IPasswordItem[]>([
   { id: 0, name: 'dns', password: 'qwerty' },
   { id: 1, name: 'mvideo', password: 'qwerty1' }
 ])
+const selectedSettings = ref<IGenerateSettings>({
+  passwordLength: '',
+  letters: false,
+  digits: false,
+  chars: false,
+  transform: 'Все',
+  inputString: ''
+})
 
 const { copy, copied } = useClipboard({ source })
 const store = useSearchValueStore()
@@ -33,6 +45,30 @@ const filteredItems = computed(() => {
     }
   })
 })
+
+const blockSettings = computed(() => {
+  return selectedSettings.value.inputString.length ? true : false
+})
+
+
+
+watch(
+  blockSettings,
+  () => {
+    if (selectedSettings.value.inputString.length > 0) {
+      selectedSettings.value = {
+        ...selectedSettings.value,
+        letters: false,
+        digits: false,
+        chars: false,
+        transform: ''
+      }
+    } else {
+      selectedSettings.value.transform = 'Все'
+    }
+  },
+  { deep: true }
+)
 
 const addPassword = () => {
   inProcess.value = true
@@ -56,7 +92,7 @@ const addPassword = () => {
     } else {
       if (serviceValue.value.length < 3) {
         rejectService.value = true
-      } 
+      }
       if (!passwordValue.value.length) {
         rejectPassword.value = true
       }
@@ -76,6 +112,11 @@ const copyPassword = (id: number) => {
 const deleteItem = (id: number) => {
   items.value = items.value.filter((i) => i.id !== id)
 }
+
+const generatePassword = () => {
+  if (Object.values(selectedSettings.value))
+    console.log(generateRandomPassword(selectedSettings.value))
+}
 </script>
 
 <template>
@@ -90,12 +131,14 @@ const deleteItem = (id: number) => {
                 label="Сервис"
                 :disabled="inProcess"
                 :class="{ 'border-red-500': rejectService }"
+                @input-focus="rejectService = false"
               ></v-input>
               <v-input
                 v-model="passwordValue"
                 label="Пароль"
                 :disabled="inProcess"
                 :class="{ 'border-red-500': rejectPassword }"
+                @input-focus="rejectPassword = false"
               ></v-input>
             </div>
             <div>
@@ -114,9 +157,65 @@ const deleteItem = (id: number) => {
         </v-modal>
       </transition>
     </template>
-    <VHeader></VHeader>
+    <template v-if="modalStore.isGenerateModalActive">
+      <transition name="bounce" mode="out-in">
+        <v-modal title="Генерация пароля" @close="modalStore.modalDisable">
+          <div class="flex flex-col gap-3">
+            <v-input
+              placeholder="Введите длину пароля"
+              v-model="selectedSettings.passwordLength"
+            ></v-input>
+            <p>Выберите символы</p>
+            <v-checkbox
+              label="Буквы"
+              v-model="selectedSettings.letters"
+              :disabled="blockSettings"
+            ></v-checkbox>
+            <v-checkbox
+              label="Цифры"
+              v-model="selectedSettings.digits"
+              :disabled="blockSettings"
+            ></v-checkbox>
+            <v-checkbox
+              label="Символы"
+              v-model="selectedSettings.chars"
+              :disabled="blockSettings"
+            ></v-checkbox>
+
+            <div class="p-2 bg-gray-100 rounded-md flex flex-wrap justify-between gap-2">
+              <v-radio
+                label="Заглавные"
+                value="Заглавные"
+                v-model="selectedSettings.transform"
+                :disabled="blockSettings"
+              ></v-radio>
+              <v-radio
+                label="Строчные"
+                value="Строчные"
+                v-model="selectedSettings.transform"
+                :disabled="blockSettings"
+              ></v-radio>
+              <v-radio
+                label="Все"
+                value="Все"
+                v-model="selectedSettings.transform"
+                :disabled="blockSettings"
+              ></v-radio>
+              {{ selectedSettings.transform }}
+            </div>
+
+            <v-input
+              placeholder="Введите свои символы"
+              v-model="selectedSettings.inputString"
+            ></v-input>
+            <button @click="generatePassword">сделать красиво</button>
+          </div>
+        </v-modal>
+      </transition>
+    </template>
+    <v-header></v-header>
     <div class="my-4"></div>
-    <VList :items="filteredItems" @copy-password="copyPassword" @delete-item="deleteItem"></VList>
+    <v-list :items="filteredItems" @copy-password="copyPassword" @delete-item="deleteItem"></v-list>
     <transition-group name="fade">
       <div
         v-if="copied"

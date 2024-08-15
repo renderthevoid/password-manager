@@ -8,6 +8,7 @@
       v-bind="$attrs"
       :value="props.modelValue"
       @input="updateInput"
+      @focus="inputFocus"
     />
     <div class="text-red-500">
       <slot></slot>
@@ -27,10 +28,14 @@ interface IInputProps {
 }
 
 const props = defineProps<IInputProps>()
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'inputFocus'])
 
 const updateInput = (event: Event) => {
   emit('update:modelValue', (event.target as HTMLInputElement).value)
+}
+
+const inputFocus = () => {
+  emit('inputFocus')
 }
 
 const computeWarn = computed(() => {
