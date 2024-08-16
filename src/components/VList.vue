@@ -27,7 +27,7 @@ const props = defineProps<IListProps>()
         <div class="flex-1">Пароль</div>
       </div>
       <div class="max-h-96 h-screen">
-        <ul class="w-full flex flex-col gap-2 overflow-y-scroll h-full">
+        <ul class="w-full flex flex-col gap-2 overflow-y-scroll no-scrollbar h-full">
           <VListItem
             v-for="item in items"
             :key="item.id"
