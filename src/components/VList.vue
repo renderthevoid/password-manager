@@ -20,14 +20,14 @@ const props = defineProps<IListProps>()
 </script>
 
 <template>
-  <div>
-    <div class="container">
-      <div class="flex justify-between items-center px-2">
+  <div class="mb-3">
+    <div class="container flex flex-col">
+      <div class="flex justify-between items-center px-2 mr-16 mb-2">
         <div class="flex-1">Сервис</div>
         <div class="flex-1">Пароль</div>
       </div>
-      <div>
-        <ul class="w-full">
+      <div class="max-h-96 h-screen">
+        <ul class="w-full flex flex-col gap-2 overflow-y-scroll h-full">
           <VListItem
             v-for="item in items"
             :key="item.id"

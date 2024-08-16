@@ -5,7 +5,7 @@ import VModal from '@/components/VModal.vue'
 import VInput from '@/components/VInput.vue'
 import VCheckbox from '@/components/VCheckbox.vue'
 import VRadio from '@/components/VRadio.vue'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, onMounted, provide, ref, watch, watchEffect } from 'vue'
 import type { IPasswordItem } from '@/models/interfaces/PasswordInterface'
 import { useClipboard } from '@vueuse/core'
 import { useSearchValueStore } from '@/stores/searchValueStore'
@@ -21,9 +21,13 @@ const inProcess = ref<boolean>(false)
 const rejectService = ref<boolean>(false)
 const rejectPassword = ref<boolean>(false)
 const source = ref('')
+const generatedPassword = ref<string>('')
+const isAllFieldsFilled = ref<boolean>(true)
+const isDeletingItem = ref<boolean>(false)
+
 const items = ref<IPasswordItem[]>([
-  { id: 0, name: 'dns', password: 'qwerty' },
-  { id: 1, name: 'mvideo', password: 'qwerty1' }
+  // { id: 0, name: 'dns', password: 'qwerty' },
+  // { id: 1, name: 'mvideo', password: 'qwerty1' }
 ])
 const selectedSettings = ref<IGenerateSettings>({
   passwordLength: '',
@@ -40,7 +44,7 @@ const modalStore = useModalStore()
 
 const filteredItems = computed(() => {
   return items.value.filter((item) => {
-    if (item.name.includes(store.value)) {
+    if (item.name.toLowerCase().includes(store.value.toLowerCase())) {
       return true
     }
   })
@@ -49,8 +53,6 @@ const filteredItems = computed(() => {
 const blockSettings = computed(() => {
   return selectedSettings.value.inputString.length ? true : false
 })
-
-
 
 watch(
   blockSettings,
@@ -80,11 +82,12 @@ const addPassword = () => {
         items.value = [
           ...items.value,
           {
-            id: items.value[items.value.length - 1]['id'] + 1,
+            id: items.value.length ? items.value[items.value.length - 1]['id'] + 1 : 0,
             name: serviceValue.value,
             password: passwordValue.value
           }
         ]
+        localStorage.setItem('items', JSON.stringify(items.value))
         serviceValue.value = ''
         passwordValue.value = ''
         await modalStore.modalDisable()
@@ -98,7 +101,7 @@ const addPassword = () => {
       }
     }
     inProcess.value = false
-  }, 2000)
+  }, 1000)
 }
 
 const copyPassword = (id: number) => {
@@ -109,14 +112,42 @@ const copyPassword = (id: number) => {
   })
 }
 
-const deleteItem = (id: number) => {
-  items.value = items.value.filter((i) => i.id !== id)
+const copyGeneratedPassword = () => {
+  if (generatedPassword.value.length) {
+    copy(generatedPassword.value)
+  }
 }
 
-const generatePassword = () => {
-  if (Object.values(selectedSettings.value))
-    console.log(generateRandomPassword(selectedSettings.value))
+const deleteItem = (id: number) => {
+  isDeletingItem.value = true
+  setTimeout(async () => {
+    if (getRandomStatus(1, 10) > 5) {
+      items.value = items.value.filter((i) => i.id !== id)
+      await localStorage.setItem('items', JSON.stringify(items.value))
+    }
+    isDeletingItem.value = false
+  }, 1000)
 }
+provide('deleting', isDeletingItem)
+
+const generatePassword = () => {
+  if (!selectedSettings.value.passwordLength) {
+    return (isAllFieldsFilled.value = false)
+  }
+  if (
+    Object.values(selectedSettings.value).includes(true) ||
+    selectedSettings.value.inputString.length
+  ) {
+    isAllFieldsFilled.value = true
+    generatedPassword.value = generateRandomPassword(selectedSettings.value)
+  }
+}
+
+onMounted(() => {
+  if (localStorage.getItem('items') !== null) {
+    items.value = JSON.parse(localStorage.getItem('items') || '[]') 
+  }
+})
 </script>
 
 <template>
@@ -124,36 +155,38 @@ const generatePassword = () => {
     <template v-if="modalStore.isModalActive">
       <transition name="bounce" mode="out-in">
         <v-modal title="Добавить пароль" @close="modalStore.modalDisable">
-          <div class="flex flex-col gap-3">
-            <div class="flex flex-col gap-2">
-              <v-input
-                v-model="serviceValue"
-                label="Сервис"
-                :disabled="inProcess"
-                :class="{ 'border-red-500': rejectService }"
-                @input-focus="rejectService = false"
-              ></v-input>
-              <v-input
-                v-model="passwordValue"
-                label="Пароль"
-                :disabled="inProcess"
-                :class="{ 'border-red-500': rejectPassword }"
-                @input-focus="rejectPassword = false"
-              ></v-input>
+          <form action="" @submit.prevent="addPassword">
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-col gap-2">
+                <v-input
+                  v-model="serviceValue"
+                  label="Сервис"
+                  :disabled="inProcess"
+                  :class="{ 'border-red-500': rejectService }"
+                  @input-focus="rejectService = false"
+                ></v-input>
+                <v-input
+                  v-model="passwordValue"
+                  label="Пароль"
+                  :disabled="inProcess"
+                  :class="{ 'border-red-500': rejectPassword }"
+                  @input-focus="rejectPassword = false"
+                ></v-input>
+              </div>
+              <div>
+                <button
+                  class="bg-green-700 text-md border-radius border-none w-full p-2 text-white"
+                  :disabled="inProcess"
+                  @click="addPassword"
+                >
+                  <span v-if="!inProcess"> Добавить </span>
+                  <span v-else>
+                    <font-awesome-icon :icon="faCircleNotch" class="animate-spin" />
+                  </span>
+                </button>
+              </div>
             </div>
-            <div>
-              <button
-                class="bg-green-700 text-md border-radius border-none w-full p-2 text-white"
-                :disabled="inProcess"
-                @click="addPassword"
-              >
-                <span v-if="!inProcess"> Добавить </span>
-                <span v-else>
-                  <font-awesome-icon :icon="faCircleNotch" class="animate-spin" />
-                </span>
-              </button>
-            </div>
-          </div>
+          </form>
         </v-modal>
       </transition>
     </template>
@@ -201,25 +234,42 @@ const generatePassword = () => {
                 v-model="selectedSettings.transform"
                 :disabled="blockSettings"
               ></v-radio>
-              {{ selectedSettings.transform }}
             </div>
+
+            <div v-if="!isAllFieldsFilled" class="text-red-500 text-sm">Заполните все поля</div>
 
             <v-input
               placeholder="Введите свои символы"
               v-model="selectedSettings.inputString"
             ></v-input>
+            <div class="h-10">
+              <button
+                class="w-full h-full border rounded-md px-3 bg-gray-200"
+                @click="copyGeneratedPassword"
+              >
+                <span>
+                  {{ generatedPassword }}
+                </span>
+              </button>
+            </div>
             <button @click="generatePassword">сделать красиво</button>
           </div>
         </v-modal>
       </transition>
     </template>
-    <v-header></v-header>
-    <div class="my-4"></div>
-    <v-list :items="filteredItems" @copy-password="copyPassword" @delete-item="deleteItem"></v-list>
+    <div class="flex flex-col h-screen">
+      <v-header></v-header>
+      <div class="my-4"></div>
+      <v-list
+        :items="filteredItems"
+        @copy-password="copyPassword"
+        @delete-item="deleteItem"
+      ></v-list>
+    </div>
     <transition-group name="fade">
       <div
         v-if="copied"
-        class="absolute right-4 bottom-0 bg-gray-400 transition overflow-hidden p-2 rounded-sm"
+        class="absolute z-50 right-4 bottom-0 bg-gray-400 transition overflow-hidden p-2 rounded-sm"
       >
         <div class="text-white">Скопировано!</div>
       </div>

@@ -4,6 +4,7 @@
       type="checkbox"
       :id="props.label"
       :name="props.label"
+      :checked="isChecked"
       @change="changeCheckbox"
       :value="props.modelValue"
       v-bind="$attrs"
@@ -15,6 +16,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+
 interface ICheckboxProps {
   modelValue: boolean | string
   label?: string
@@ -23,7 +26,9 @@ interface ICheckboxProps {
 }
 const props = defineProps<ICheckboxProps>()
 const emit = defineEmits(['update:modelValue'])
-
+const isChecked = computed(() => {
+  return props.modelValue
+})
 const changeCheckbox = (event: Event) => {
   emit('update:modelValue', (event.target as HTMLInputElement).checked)
 }

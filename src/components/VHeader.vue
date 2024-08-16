@@ -50,7 +50,7 @@ import { useModalStore } from '@/stores/modalStore'
 const store = useSearchValueStore()
 const modalStore = useModalStore()
 
-const openModal = () => {}
+
 </script>
 
 <style scoped></style>
