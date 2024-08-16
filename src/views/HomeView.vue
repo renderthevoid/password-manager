@@ -145,7 +145,7 @@ const generatePassword = () => {
 
 onMounted(() => {
   if (localStorage.getItem('items') !== null) {
-    items.value = JSON.parse(localStorage.getItem('items') || '[]') 
+    items.value = JSON.parse(localStorage.getItem('items') || '[]')
   }
 })
 </script>
@@ -260,11 +260,13 @@ onMounted(() => {
     <div class="flex flex-col h-screen">
       <v-header></v-header>
       <div class="my-4"></div>
-      <v-list
-        :items="filteredItems"
-        @copy-password="copyPassword"
-        @delete-item="deleteItem"
-      ></v-list>
+      <template v-if="items.length">
+        <v-list
+          :items="filteredItems"
+          @copy-password="copyPassword"
+          @delete-item="deleteItem"
+        ></v-list>
+      </template>
     </div>
     <transition-group name="fade">
       <div
