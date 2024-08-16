@@ -19,14 +19,14 @@
 import { computed } from 'vue';
 
 interface ICheckboxProps {
-  modelValue: boolean | string
+  modelValue: boolean
   label?: string
   id?: string
   disabled?: boolean
 }
 const props = defineProps<ICheckboxProps>()
 const emit = defineEmits(['update:modelValue'])
-const isChecked = computed(() => {
+const isChecked = computed<boolean>(() => {
   return props.modelValue
 })
 const changeCheckbox = (event: Event) => {
